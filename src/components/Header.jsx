@@ -27,7 +27,21 @@ const Header = ({ darkMode, setDarkMode }) => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => document.body.classList.remove('overflow-hidden');
   }, [isOpen]);
 
   const updateActiveSection = () => {
@@ -166,13 +180,26 @@ const Header = ({ darkMode, setDarkMode }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            className="md:hidden fixed inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-40 pt-20"
+            className="md:hidden fixed inset-0 w-screen h-screen z-[60] bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg pt-20 overflow-y-auto"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
+            onClick={() => setIsOpen(false)}
+            role="dialog"
+            aria-modal="true"
           >
-            <div className="px-6 py-4 space-y-4">
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 p-2 rounded-full bg-gray-200/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300"
+              onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+              aria-label="Fermer le menu"
+            >
+              <FiX size={22} />
+            </button>
+
+            {/* Menu content wrapper - stop propagation so clicks inside do not close */}
+            <div className="px-6 py-4 space-y-4" onClick={(e) => e.stopPropagation()}>
               {navItems.map((item) => (
                 <motion.button
                   key={item.id}
